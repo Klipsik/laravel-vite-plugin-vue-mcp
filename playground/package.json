@@ -7,8 +7,8 @@
     "dev": "DEBUG=vite:mcp:server vite"
   },
   "dependencies": {
+    "laravel-vite-plugin-vue-mcp": "workspace:*",
     "pinia": "catalog:",
-    "vite-plugin-vue-mcp": "workspace:*",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },

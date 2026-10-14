@@ -1,7 +1,6 @@
 import type { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import type { RpcFunctions, VueMcpContext, VueMcpOptions } from './types'
 import { existsSync } from 'node:fs'
-import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import c from 'ansis'
@@ -10,6 +9,7 @@ import { normalizePath, searchForWorkspaceRoot } from 'vite'
 import { createRPCServer } from 'vite-dev-rpc'
 import { setupRoutes } from './connect'
 import { createVueMcpContext } from './context'
+import { resolveMcpJsonTargets, resolveServerName, updateIdeConfig } from './ide-configs'
 import { createServerRpc } from './rpc'
 
 function getVueMcpPath(): string {
@@ -18,17 +18,57 @@ function getVueMcpPath(): string {
 }
 const vueMcpResourceSymbol = '?__vue-mcp-resource'
 
+// Laravel app entry candidates, ordered by convention
+const LARAVEL_ENTRY_CANDIDATES = [
+  'resources/js/app.ts',
+  'resources/ts/app.ts',
+  'resources/js/app.jsx',
+  'resources/js/app.tsx',
+  'resources/js/app.js',
+  'resources/ts/main.ts',
+  'resources/ts/main.js',
+  'resources/scripts/app.ts',
+  'resources/scripts/app.js',
+  'resources/js/ssr.ts',
+  'resources/js/ssr.js',
+]
+
+function isLaravelProject(root: string): boolean {
+  return existsSync(join(root, 'artisan'))
+}
+
+function isScriptEntry(file: string): boolean {
+  return /\.(?:[cm]?[jt]sx?|vue)$/.test(file)
+}
+
+/**
+ * `laravel-vite-plugin` exposes the app entry via `build.rollupOptions.input`,
+ * this works for any custom entry (e.g. `resources/ts/main.ts`)
+ */
+function getEntryFromRollupInput(input: unknown, root: string): string | undefined {
+  const entries = typeof input === 'string'
+    ? [input]
+    : Array.isArray(input)
+      ? input.filter((entry): entry is string => typeof entry === 'string')
+      : input && typeof input === 'object'
+        ? Object.values(input as Record<string, unknown>).filter((entry): entry is string => typeof entry === 'string')
+        : []
+
+  return entries.find(entry => isScriptEntry(entry) && existsSync(join(root, entry)))
+}
+
+function detectLaravelEntry(resolvedConfig: ResolvedConfig): string | undefined {
+  const root = searchForWorkspaceRoot(resolvedConfig.root)
+  return getEntryFromRollupInput(resolvedConfig.build?.rollupOptions?.input, root)
+    ?? LARAVEL_ENTRY_CANDIDATES.find(file => existsSync(join(root, file)))
+}
+
 export function VueMcp(options: VueMcpOptions = {}): Plugin {
   const {
     mcpPath = '/__mcp',
-    updateCursorMcpJson = true,
     printUrl = true,
     mcpServer = (vite: ViteDevServer, ctx: VueMcpContext) => import('./server').then(m => m.createMcpServerDefault(options, vite, ctx)),
   } = options
-
-  const cursorMcpOptions = typeof updateCursorMcpJson == 'boolean'
-    ? { enabled: updateCursorMcpJson }
-    : updateCursorMcpJson
 
   let config: ResolvedConfig
   const vueMcpPath = getVueMcpPath()
@@ -37,15 +77,19 @@ export function VueMcp(options: VueMcpOptions = {}): Plugin {
 
   const ctx = createVueMcpContext()
 
+  // Resolved in `configResolved`, once the project root is known
+  let appendTo: string | RegExp | undefined = options.appendTo
+  let laravelEnabled = false
+
   return {
-    name: 'vite-plugin-mcp',
+    name: 'laravel-vite-plugin-vue-mcp',
     enforce: 'pre',
     apply: 'serve',
     async configureServer(vite) {
       const rpc = createServerRpc(ctx)
 
       const rpcServer = createRPCServer<RpcFunctions, any>(
-        'vite-plugin-vue-mcp',
+        'laravel-vite-plugin-vue-mcp',
         vite.ws,
         rpc,
         {
@@ -64,21 +108,19 @@ export function VueMcp(options: VueMcpOptions = {}): Plugin {
 
       const sseUrl = `http://${options.host || 'localhost'}:${port}${mcpPath}/sse`
 
-      if (cursorMcpOptions.enabled) {
-        if (existsSync(join(root, '.cursor'))) {
-          const mcp = existsSync(join(root, '.cursor/mcp.json'))
-            ? JSON.parse(await fs.readFile(join(root, '.cursor/mcp.json'), 'utf-8') || '{}')
-            : {}
-          mcp.mcpServers ||= {}
-          mcp.mcpServers[cursorMcpOptions.serverName || 'vue-mcp'] = { url: sseUrl }
-          await fs.writeFile(join(root, '.cursor/mcp.json'), `${JSON.stringify(mcp, null, 2)}\n`)
-        }
+      const updatedConfigs: string[] = []
+      for (const target of resolveMcpJsonTargets(options)) {
+        if (await updateIdeConfig(root, target, resolveServerName(options), sseUrl))
+          updatedConfigs.push(target.file)
       }
 
       if (printUrl) {
         setTimeout(() => {
           // eslint-disable-next-line no-console
           console.log(`${c.yellow.bold`  ➜  MCP:     `}Server is running at ${sseUrl}`)
+          if (updatedConfigs.length)
+            // eslint-disable-next-line no-console
+            console.log(`${c.yellow.bold`  ➜  MCP:     `}Updated ${updatedConfigs.join(', ')}`)
         }, 300)
       }
     },
@@ -93,12 +135,24 @@ export function VueMcp(options: VueMcpOptions = {}): Plugin {
     },
     configResolved(resolvedConfig) {
       config = resolvedConfig
+
+      // Laravel projects are detected via the `artisan` file, no HTML entry exists
+      laravelEnabled = options.laravel ?? isLaravelProject(searchForWorkspaceRoot(resolvedConfig.root))
+
+      if (options.appendTo) {
+        // Explicit `appendTo` always wins
+        appendTo = options.appendTo
+      }
+      else if (laravelEnabled) {
+        appendTo = detectLaravelEntry(resolvedConfig)
+        if (!appendTo)
+          console.warn(c.yellow.bold('  ➜  MCP:     '), 'Laravel project detected, but no entry file found. Set `appendTo` manually.')
+      }
     },
     transform(code, id, _options) {
       if (_options?.ssr)
         return
 
-      const appendTo = options.appendTo
       const [filename] = id.split('?', 2)
 
       if (appendTo
@@ -111,7 +165,9 @@ export function VueMcp(options: VueMcpOptions = {}): Plugin {
       return code
     },
     transformIndexHtml(html) {
-      if (options.appendTo)
+      // When the overlay is appended to a module entry (e.g. Laravel),
+      // there is no HTML file to inject the script into
+      if (appendTo)
         return
 
       return {

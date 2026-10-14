@@ -27,7 +27,9 @@ catalog:
   vite-dev-rpc: ^1.0.7
   vite-hot-client: ^2.0.4
   vite-plugin-vue-devtools: ^7.7.2
-  vite-plugin-vue-mcp: ^0.0.0
   vue: ^3.4.37
   vue-router: ^4.5.0
   zod: ^3.24.2
+catalogs:
+  conflicts_@types/node_h22_10_0:
+    '@types/node': ^22.10.0

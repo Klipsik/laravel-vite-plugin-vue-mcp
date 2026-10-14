@@ -3,9 +3,25 @@ import { devtools, devtoolsRouterInfo, devtoolsState, getInspector, stringify, t
 import { createRPCClient } from 'vite-dev-rpc'
 import { createHotContext } from 'vite-hot-client'
 
+const base = (() => {
+  const fallback = import.meta.env.BASE_URL || '/'
 
-const base = import.meta.env.BASE_URL || '/'
-const hot = createHotContext('',base)
+  // Laravel and other apps that serve HTML outside of Vite: the page is served
+  // by the app server while Vite runs on its own origin, injected by `@vite`
+  // as the `@vite/client` script tag
+  const client = document.querySelector('script[src*="@vite/client"]')
+  if (client) {
+    try {
+      const url = new URL(client.src)
+      if (url.origin !== window.location.origin)
+        return `${url.origin}/`
+    }
+    catch {}
+  }
+
+  return fallback
+})()
+const hot = createHotContext('', base)
 const PINIA_INSPECTOR_ID = 'pinia'
 const COMPONENTS_INSPECTOR_ID = 'components'
 
@@ -31,7 +47,7 @@ function flattenChildren(node) {
 }
 
 const rpc = createRPCClient(
-  'vite-plugin-vue-mcp',
+  'laravel-vite-plugin-vue-mcp',
   hot,
   {
     // get component tree
@@ -96,7 +112,9 @@ const rpc = createRPCClient(
     },
     // get router info
     async getRouterInfo(query) {
-      rpc.onRouterInfoUpdated(query.event, JSON.stringify(devtoolsRouterInfo, null, 2))
+      // `devtoolsRouterInfo` is undefined when the app has no vue-router
+      // (e.g. Laravel + Inertia, which uses its own client-side routing)
+      rpc.onRouterInfoUpdated(query.event, JSON.stringify(devtoolsRouterInfo ?? null, null, 2))
     },
     // get pinia tree
     async getPiniaTree(query) {

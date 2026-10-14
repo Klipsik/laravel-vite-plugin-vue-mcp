@@ -1,21 +1,24 @@
 {
-  "name": "vite-plugin-vue-mcp",
+  "name": "laravel-vite-plugin-vue-mcp",
   "type": "module",
-  "version": "0.3.2",
+  "version": "1.0.0",
   "packageManager": "pnpm@10.6.2",
-  "description": "MCP server helping models to understand your Vue app better.",
-  "author": "Arlo <webfansplz@gmail.com>",
+  "description": "MCP server for your Laravel + Vue app (component tree, state, routes and Pinia), auto-attached to your laravel-vite-plugin entry. Fork of vite-plugin-vue-mcp by Arlo (@webfansplz).",
+  "author": "Klipsik <https://github.com/Klipsik>, based on vite-plugin-vue-mcp by Arlo <webfansplz@gmail.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/webfansplz",
-  "homepage": "https://github.com/webfansplz/vite-plugin-vue-mcp#readme",
+  "homepage": "https://github.com/Klipsik/laravel-vite-plugin-vue-mcp#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/webfansplz/vite-plugin-vue-mcp.git"
+    "url": "git+https://github.com/Klipsik/laravel-vite-plugin-vue-mcp.git"
   },
-  "bugs": "https://github.com/webfansplz/vite-plugin-vue-mcp/issues",
+  "bugs": "https://github.com/Klipsik/laravel-vite-plugin-vue-mcp/issues",
   "keywords": [
     "vite-plugin",
+    "vite",
     "vue",
+    "laravel",
+    "inertia",
     "mcp",
     "modelcontextprotocol"
   ],
@@ -39,41 +42,42 @@
     "build": "unbuild",
     "dev": "unbuild --stub",
     "play": "nr -C playground dev",
+    "prepare": "unbuild",
     "prepublishOnly": "nr build",
     "lint": "eslint",
     "release": "bumpp && pnpm publish --no-git-checks"
   },
   "peerDependencies": {
-    "vite": "^3.1.0 || ^4.0.0-0 || ^5.0.0-0 || ^6.0.0-0"
+    "vite": "^3.1.0 || ^4.0.0-0 || ^5.0.0-0 || ^6.0.0-0 || ^7.0.0-0"
   },
   "dependencies": {
-    "@antfu/utils": "catalog:",
-    "@modelcontextprotocol/sdk": "catalog:",
-    "@vue/devtools-core": "catalog:",
-    "@vue/devtools-kit": "catalog:",
-    "ansis": "catalog:",
-    "birpc": "catalog:",
-    "debug": "catalog:",
-    "hookable": "catalog:",
-    "nanoid": "catalog:",
-    "pathe": "catalog:",
-    "vite-dev-rpc": "catalog:",
-    "vite-hot-client": "catalog:",
-    "zod": "catalog:"
+    "@antfu/utils": "^9.1.0",
+    "@modelcontextprotocol/sdk": "^1.7.0",
+    "@vue/devtools-core": "^7.7.2",
+    "@vue/devtools-kit": "^7.7.2",
+    "ansis": "^3.17.0",
+    "birpc": "^2.2.0",
+    "debug": "^4.4.0",
+    "hookable": "^5.5.3",
+    "nanoid": "^3.3.10",
+    "pathe": "^2.0.3",
+    "vite-dev-rpc": "^1.0.7",
+    "vite-hot-client": "^2.0.4",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "catalog:",
-    "@antfu/ni": "catalog:",
-    "@modelcontextprotocol/inspector": "catalog:",
-    "@modelcontextprotocol/sdk": "catalog:",
-    "@types/debug": "catalog:",
-    "@types/node": "catalog:",
-    "bumpp": "catalog:",
-    "eslint": "catalog:",
-    "tsx": "catalog:",
-    "typescript": "catalog:",
-    "unbuild": "catalog:",
-    "vite": "catalog:",
-    "zod": "catalog:"
+    "@antfu/eslint-config": "^4.10.1",
+    "@antfu/ni": "^24.1.0",
+    "@modelcontextprotocol/inspector": "^0.6.0",
+    "@modelcontextprotocol/sdk": "^1.7.0",
+    "@types/debug": "^4.1.12",
+    "@types/node": "^22.10.0",
+    "bumpp": "^10.1.0",
+    "eslint": "^9.22.0",
+    "tsx": "^4.19.3",
+    "typescript": "~5.8.2",
+    "unbuild": "^3.5.0",
+    "vite": "^6.2.1",
+    "zod": "^3.24.2"
   }
 }
