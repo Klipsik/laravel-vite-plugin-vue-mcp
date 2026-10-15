@@ -14,10 +14,16 @@ Unlike plain SPA setups, a Laravel app has no `index.html` entry — the plugin 
 ## Installation 📦
 
 ```bash
-# npm / yarn / pnpm from GitHub
-pnpm add -D github:Klipsik/laravel-vite-plugin-vue-mcp
+# npm / yarn / pnpm / bun
+pnpm add -D laravel-vite-plugin-vue-mcp
+bun add -d laravel-vite-plugin-vue-mcp
+npm install -D laravel-vite-plugin-vue-mcp
+```
 
-# or npm shorthand
+Or install the latest commit from GitHub:
+
+```bash
+pnpm add -D github:Klipsik/laravel-vite-plugin-vue-mcp
 npm install -D Klipsik/laravel-vite-plugin-vue-mcp
 ```
 
@@ -286,10 +292,10 @@ This project is a fork of [vite-plugin-vue-mcp](https://github.com/webfansplz/vi
 
 <!-- Badges -->
 
-[npm-version-src]: https://img.shields.io/badge/npm-v1.0.0-1fa669?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://github.com/Klipsik/laravel-vite-plugin-vue-mcp
-[npm-downloads-src]: https://img.shields.io/github/stars/Klipsik/laravel-vite-plugin-vue-mcp?style=flat&colorA=080f12&colorB=1fa669&label=stars
-[npm-downloads-href]: https://github.com/Klipsik/laravel-vite-plugin-vue-mcp/stargazers
+[npm-version-src]: https://img.shields.io/npm/v/laravel-vite-plugin-vue-mcp?style=flat&colorA=080f12&colorB=1fa669
+[npm-version-href]: https://npmjs.com/package/laravel-vite-plugin-vue-mcp
+[npm-downloads-src]: https://img.shields.io/npm/dm/laravel-vite-plugin-vue-mcp?style=flat&colorA=080f12&colorB=1fa669
+[npm-downloads-href]: https://npmjs.com/package/laravel-vite-plugin-vue-mcp
 [bundle-src]: https://img.shields.io/badge/dynamic/json?style=flat&colorA=080f12&colorB=1fa669&label=minzip&query=%24.dist.uncompressedSize&url=https%3A%2F%2Funpkg.com%2Flaravel-vite-plugin-vue-mcp%40latest%2Fpackage.json
 [bundle-href]: https://github.com/Klipsik/laravel-vite-plugin-vue-mcp
 [license-src]: https://img.shields.io/github/license/Klipsik/laravel-vite-plugin-vue-mcp.svg?style=flat&colorA=080f12&colorB=1fa669
